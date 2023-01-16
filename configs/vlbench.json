@@ -1,5 +1,5 @@
 {
-    "name": "MSRVTTjsfusion_4f_stformer_pt-im21k",
+    "name": "VLBench",
     "n_gpu": 1,
     "arch": {
         "type": "FrozenInTime",
@@ -23,8 +23,8 @@
     "data_loader": {
         "type": "TextVideoDataLoader",
         "args":{
-            "dataset_name": "MSRVTT",
-            "data_dir": "data/MSRVTT/",
+            "dataset_name": "VLBench",
+            "data_dir": "data/vl-bench/",
             "shuffle": true,
             "num_workers": 0,
             "batch_size": 16,

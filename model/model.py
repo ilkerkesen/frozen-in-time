@@ -168,6 +168,11 @@ def sim_matrix(a, b, eps=1e-8):
     return sim_mt
 
 def compute_similarity(a, b, a_mask=None, b_mask=None, style='single', eps=1e-8, return_raw=False, temp=0.5):
+    """
+    computes similarity scores for a and b. returns two outputs.
+    out[0]: rows represent instances of a.
+    out[1]: rows represent instances of b.
+    """
     if style == 'single':
         sim = sim_matrix(a, b, eps=eps)
         return sim, sim.t()

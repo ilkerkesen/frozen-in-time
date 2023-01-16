@@ -2,6 +2,7 @@ from base import BaseDataLoaderExplicitSplit, BaseMultiDataLoader
 from data_loader.ConceptualCaptions_dataset import ConceptualCaptions3M
 from data_loader.LSMDC_dataset import LSMDC
 from data_loader.MSRVTT_dataset import MSRVTT
+from data_loader.VLBench_dataset import VLBench, _collate_fn
 from data_loader.WebVid_dataset import WebVid
 from data_loader.VideoDirectory_dataset import VideoDirectory, CMDShotFeats
 from data_loader.ImageDirectory_dataset import ImageDirectory
@@ -18,7 +19,10 @@ def dataset_loader(dataset_name,
                    cut=None,
                    subsample=1,
                    sliding_window_stride=-1,
-                   reader='decord'):
+                   reader='decord',
+                   metadata_filename=None,
+                   quva_dir=None,
+                   something_something_dir=None):
     kwargs = dict(
         dataset_name=dataset_name,
         text_params=text_params,
@@ -50,6 +54,13 @@ def dataset_loader(dataset_name,
         dataset = ActivityNet(**kwargs)
     elif dataset_name == "ImageDirectory":
         dataset = ImageDirectory(**kwargs)
+    elif dataset_name == "VLBench":
+        dataset = VLBench(
+            **kwargs,
+            metadata_filename=metadata_filename,
+            quva_dir=quva_dir,
+            something_something_dir=something_something_dir,
+        )
     else:
         raise NotImplementedError(f"Dataset: {dataset_name} not found.")
 
@@ -74,7 +85,11 @@ class TextVideoDataLoader(BaseDataLoaderExplicitSplit):
                  num_workers=1,
                  prefetch_factor=2,
                  shuffle=True,
-                 val_batch_size=None):
+                 val_batch_size=None,
+                 metadata_filename=None,
+                 quva_dir=None,
+                 something_something_dir=None,
+        ):
         if tsfm_params is None:
             tsfm_params = {}
         tsfm_dict = init_transform_dict(**tsfm_params)
@@ -82,14 +97,39 @@ class TextVideoDataLoader(BaseDataLoaderExplicitSplit):
         if tsfm_split is None:
             tsfm_split = split
         tsfm = tsfm_dict[tsfm_split]
-        dataset = dataset_loader(dataset_name, text_params, video_params, data_dir, metadata_dir, split, tsfm, cut,
-                                 subsample, sliding_window_stride, reader)
-        #        if split != 'train':
-        #            shuffle = False
+        dataset = dataset_loader(
+            dataset_name,
+            text_params,
+            video_params,
+            data_dir,
+            metadata_dir=metadata_dir,
+            split=split,
+            tsfms=tsfm,
+            cut=cut,
+            subsample=subsample,
+            sliding_window_stride=sliding_window_stride,
+            reader=reader,
+            metadata_filename=metadata_filename,
+            quva_dir=quva_dir,
+            something_something_dir=something_something_dir,
+        )
+
         if val_batch_size is not None and split == 'val':
             batch_size = val_batch_size
 
-        super().__init__(dataset, batch_size, shuffle, num_workers, prefetch_factor=prefetch_factor)
+        # our dataset uses a different collate_fn
+        collate_fn = None
+        if type(dataset) is VLBench:
+            collate_fn = _collate_fn
+
+        super().__init__(
+            dataset,
+            batch_size,
+            shuffle,
+            num_workers,
+            collate_fn=collate_fn,
+            prefetch_factor=prefetch_factor,
+        )
         self.dataset_name = dataset_name
 
 

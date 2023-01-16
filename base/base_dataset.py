@@ -10,6 +10,7 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset, get_worker_info
 from torchvision import transforms
+from torchvision.io import read_video
 
 
 class TextVideoDataset(Dataset):
@@ -24,7 +25,10 @@ class TextVideoDataset(Dataset):
                  cut=None,
                  subsample=1,
                  sliding_window_stride=-1,
-                 reader='decord'
+                 reader='decord',
+                 metadata_filename=None,
+                 quva_dir=None,
+                 something_something_dir=None,
                  ):
         self.dataset_name = dataset_name
         self.text_params = text_params
@@ -35,6 +39,7 @@ class TextVideoDataset(Dataset):
             self.metadata_dir = os.path.expandvars(metadata_dir)
         else:
             self.metadata_dir = self.data_dir
+        self.metadata_filename = metadata_filename
         self.split = split
         self.transforms = tsfms
         self.cut = cut
@@ -42,6 +47,12 @@ class TextVideoDataset(Dataset):
         self.sliding_window_stride = sliding_window_stride
         self.video_reader = video_reader[reader]
         self.label_type = 'caption'
+        self.quva_dir = quva_dir
+        if quva_dir is not None:
+            self.quva_dir = process_path(quva_dir)
+        self.something_something_dir = something_something_dir
+        if something_something_dir is not None:
+            self.something_something_dir = process_path(something_something_dir)
         self._load_metadata()
         if self.sliding_window_stride != -1:
             if self.split != 'test':
@@ -80,6 +91,7 @@ class TextVideoDataset(Dataset):
         return len(self.metadata)
 
     def __getitem__(self, item):
+        # import ipdb; ipdb.set_trace()
         item = item % len(self.metadata)
         sample = self.metadata.iloc[item]
         video_fp, rel_fp = self._get_video_path(sample)
@@ -211,6 +223,7 @@ decord.bridge.set_bridge("torch")
 
 
 def read_frames_decord(video_path, num_frames, sample='rand', fix_start=None):
+    import ipdb; ipdb.set_trace()
     video_reader = decord.VideoReader(video_path, num_threads=1)
     vlen = len(video_reader)
     frame_idxs = sample_frames(num_frames, vlen, sample=sample, fix_start=fix_start)
@@ -234,3 +247,9 @@ video_reader = {
     'cv2': read_frames_cv2,
     'decord': read_frames_decord
 }
+
+
+def process_path(path):
+    path = os.path.expanduser(path)
+    path = os.path.abspath(path)
+    return path
