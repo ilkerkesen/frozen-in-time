@@ -15,7 +15,9 @@ from trainer.trainer import verbose
 from utils.util import state_dict_data_parallel_fix
 import numpy as np
 import os
+import os.path as osp
 import copy
+import json
 
 ex = Experiment('test')
 
@@ -32,7 +34,6 @@ def run():
     config._config['data_loader']['args']['quva_dir'] = args.quva_dir
     config._config['data_loader']['args']['something_something_dir'] = args.something_something_dir
     # config._config['data_loader']['args']['video_params']['num_frames'] = 120
-
     data_loader = config.initialize('data_loader', module_data)
     n_samples = len(data_loader.dataset)
 
@@ -67,7 +68,7 @@ def run():
 
     # prepare model for testing
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = model.to(device)
+    model = model.half().to(device)
     model.eval()
 
     ctr = 0
@@ -83,8 +84,9 @@ def run():
 
     print(len(data_loader))
     num_correct, num_examples = 0, 0    
+    all_scores = dict()
     with torch.no_grad():
-        for i, data_og in tqdm(tqdm(enumerate(data_loader))):
+        for i, data_og in enumerate(tqdm(data_loader)):
             # leave this for now since not doing anything on the gpu
             data = copy.deepcopy(data_og)
             del data_og
@@ -94,24 +96,25 @@ def run():
                 padding=True,
                 truncation=True,
             ).to('cuda:0')
-            data['video'] = data['video'].to(device)
+            data['video'] = data['video'].half().to(device)
             inputs = {
                 'video': data['video'],
                 'text': text_inputs,
             }
             text_embeds, vid_embeds = model(inputs)
             output, _ = compute_similarity(text_embeds, vid_embeds)
-            import ipdb; ipdb.set_trace()
             batch_size, offset = vid_embeds.shape[0], 0
             for i in range(batch_size):
                 num_text = data['num_text'][i]
                 this = output[offset:offset+num_text, i]
-                if this.argmax().item() == 0:
-                    num_correct += 1
-                num_examples += 1
+                this = [float(x) for x in this.tolist()]
+                key = data['key'][i]
+                all_scores[key] = dict()
+                all_scores[key]['scores'] = this
                 offset += num_text
-    acc = round(100 * num_correct / num_examples, 2)
-    print(f'accuracy={acc}%')
+    with open(config._config['output_file'], 'w') as f:
+        json.dump(all_scores, f, indent=4)
+    print('done.')
 
 
 if __name__ == '__main__':
@@ -132,7 +135,7 @@ if __name__ == '__main__':
     args.add_argument('--vis_token_similarity', action='store_true')
     args.add_argument('--split', default='test', choices=['train', 'val', 'test'],
                       help='split to evaluate on.')
-    args.add_argument('--batch_size', default=16, type=int,
+    args.add_argument('--batch_size', default=32, type=int,
                       help='size of batch')
     args.add_argument('--metadata_filename', default='relations.json',
                       help='annotations file name (e.g. relations.json)')
@@ -140,10 +143,12 @@ if __name__ == '__main__':
                       help='full path to the QUVA dataset root dir.')
     args.add_argument('--something_something_dir', default=None,
                       help='full path to the something something dataset (v2) video dir.')
+    args.add_argument('-o', '--output_file', default=None, required=True)
     config = ConfigParser(args, test=True)
     # hack to get sliding into config
     args = args.parse_args()
     config._config['sliding_window_stride'] = args.sliding_window_stride
+    config._config['output_file'] = osp.abspath(osp.expanduser(args.output_file))
     ex.add_config(config.config)
 
     ex.run()
