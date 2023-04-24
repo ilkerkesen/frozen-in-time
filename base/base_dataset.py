@@ -29,6 +29,7 @@ class TextVideoDataset(Dataset):
                  metadata_filename=None,
                  quva_dir=None,
                  something_something_dir=None,
+                 proficiency=False,
                  ):
         self.dataset_name = dataset_name
         self.text_params = text_params
@@ -47,6 +48,7 @@ class TextVideoDataset(Dataset):
         self.sliding_window_stride = sliding_window_stride
         self.video_reader = video_reader[reader]
         self.label_type = 'caption'
+        self.proficiency = proficiency
         self.quva_dir = quva_dir
         if quva_dir is not None:
             self.quva_dir = process_path(quva_dir)

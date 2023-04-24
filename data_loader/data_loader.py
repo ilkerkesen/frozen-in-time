@@ -22,7 +22,8 @@ def dataset_loader(dataset_name,
                    reader='decord',
                    metadata_filename=None,
                    quva_dir=None,
-                   something_something_dir=None):
+                   something_something_dir=None,
+                   proficiency=False):
     kwargs = dict(
         dataset_name=dataset_name,
         text_params=text_params,
@@ -60,6 +61,7 @@ def dataset_loader(dataset_name,
             metadata_filename=metadata_filename,
             quva_dir=quva_dir,
             something_something_dir=something_something_dir,
+            proficiency=proficiency,
         )
     else:
         raise NotImplementedError(f"Dataset: {dataset_name} not found.")
@@ -89,6 +91,7 @@ class TextVideoDataLoader(BaseDataLoaderExplicitSplit):
                  metadata_filename=None,
                  quva_dir=None,
                  something_something_dir=None,
+                 proficiency=False,
         ):
         if tsfm_params is None:
             tsfm_params = {}
@@ -112,6 +115,7 @@ class TextVideoDataLoader(BaseDataLoaderExplicitSplit):
             metadata_filename=metadata_filename,
             quva_dir=quva_dir,
             something_something_dir=something_something_dir,
+            proficiency=proficiency,
         )
 
         if val_batch_size is not None and split == 'val':

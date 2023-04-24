@@ -33,6 +33,7 @@ def run():
     config._config['data_loader']['args']['metadata_filename'] = args.metadata_filename
     config._config['data_loader']['args']['quva_dir'] = args.quva_dir
     config._config['data_loader']['args']['something_something_dir'] = args.something_something_dir
+    config._config['data_loader']['args']['proficiency'] = args.proficiency
     # config._config['data_loader']['args']['video_params']['num_frames'] = 120
     data_loader = config.initialize('data_loader', module_data)
     n_samples = len(data_loader.dataset)
@@ -83,7 +84,7 @@ def run():
         print(F"##### WARNING SAVE_PART STARTING AT {save_part}, MAKE SURE THIS IS THE NEWEST")
 
     print(len(data_loader))
-    num_correct, num_examples = 0, 0    
+    num_correct, num_examples = 0, 0
     all_scores = dict()
     with torch.no_grad():
         for i, data_og in enumerate(tqdm(data_loader)):
@@ -144,6 +145,8 @@ if __name__ == '__main__':
     args.add_argument('--something_something_dir', default=None,
                       help='full path to the something something dataset (v2) video dir.')
     args.add_argument('-o', '--output_file', default=None, required=True)
+    args.add_argument("--proficiency", action="store_true",
+                    help="use the profiency task captions.")
     config = ConfigParser(args, test=True)
     # hack to get sliding into config
     args = args.parse_args()
