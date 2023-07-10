@@ -29,6 +29,7 @@ class TextVideoDataset(Dataset):
                  metadata_filename=None,
                  quva_dir=None,
                  something_something_dir=None,
+                 youtube_dir=None,
                  proficiency=False,
                  ):
         self.dataset_name = dataset_name
@@ -55,6 +56,9 @@ class TextVideoDataset(Dataset):
         self.something_something_dir = something_something_dir
         if something_something_dir is not None:
             self.something_something_dir = process_path(something_something_dir)
+        self.youtube_dir = youtube_dir
+        if youtube_dir is not None:
+            self.youtube_dir = process_path(youtube_dir)
         self._load_metadata()
         if self.sliding_window_stride != -1:
             if self.split != 'test':

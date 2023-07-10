@@ -33,6 +33,7 @@ def run():
     config._config['data_loader']['args']['metadata_filename'] = args.metadata_filename
     config._config['data_loader']['args']['quva_dir'] = args.quva_dir
     config._config['data_loader']['args']['something_something_dir'] = args.something_something_dir
+    config._config['data_loader']['args']['youtube_dir'] = args.youtube_dir
     config._config['data_loader']['args']['proficiency'] = args.proficiency
     # config._config['data_loader']['args']['video_params']['num_frames'] = 120
     data_loader = config.initialize('data_loader', module_data)
@@ -144,6 +145,8 @@ if __name__ == '__main__':
                       help='full path to the QUVA dataset root dir.')
     args.add_argument('--something_something_dir', default=None,
                       help='full path to the something something dataset (v2) video dir.')
+    args.add_argument('--youtube_dir', default=None,
+                      help='full path to the youtube download dir.')
     args.add_argument('-o', '--output_file', default=None, required=True)
     args.add_argument("--proficiency", action="store_true",
                     help="use the profiency task captions.")
