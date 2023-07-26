@@ -49,7 +49,7 @@ class VLBench(TextVideoDataset):
             video_file = f'{item["dataset_idx"]}.webm'
         elif dataset == 'RareAct':
             video_dir = self.youtube_dir
-            video_path = osp.join(video_dir, f'{item["youtube_id"]}.mp4')
+            video_file = f'{item["youtube_id"]}.mp4'
         else:
             raise NotImplementedError('Not implemented yet.')
         video_path = os.path.join(video_dir, video_file)
@@ -59,12 +59,14 @@ class VLBench(TextVideoDataset):
         # raise NotImplementedError('implement this.')
         video_path, video_file = self._get_video_path(item)
         vr = decord.VideoReader(video_path, num_threads=1)
-        start_time, end_time = item['start_time'], item['end_time']
-        if item['time_unit'] == 'sec' and not (start_time == 0 and end_time == -1):
-            raise NotImplementedError('this function has not been implemented for time unit of seconds.')
-        if end_time is not None and end_time <= 0:
-            end_time = None
-        frames = vr[start_time:end_time]
+        start_pts, end_pts = item['start_time'], item['end_time']
+        if item['time_unit'] == 'sec' and not (start_pts == 0 and end_pts == -1):
+            ts = vr.get_frame_timestamp(np.arange(len(vr)))
+            ts = ts[:, 0]
+            start_pts = np.abs(ts-start_pts).argmin()
+            end_pts = np.abs(ts-end_pts).argmin()
+        end_pts = end_pts if end_pts is not None else -1
+        frames = vr[start_pts:end_pts]
         vlen = len(frames)
         frame_indices = sample_frames(num_frames, vlen, sample=sample)
         frames = frames[frame_indices]
